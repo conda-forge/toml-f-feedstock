@@ -10,21 +10,22 @@ source:
   sha256: c3e5e1f57de00977b5e41d3a857ddb7e6b41f0b9116ed608cf89f295d9ef24c6
 
 build:
-  number: 1
-  skip: true  # [win]
+  number: 2
   script:
-    - set -ex
-    - meson setup _build ${MESON_ARGS:---prefix=${PREFIX} --libdir=lib}
+    - set -ex  # [unix]
+    - meson setup _build ${MESON_ARGS:---prefix=${PREFIX} --libdir=lib}  # [unix]
+    - meson setup _build --prefix=%PREFIX% --libdir=lib  # [win]
     - meson compile -C _build
-    - meson test -C _build --no-rebuild --print-errorlogs  # [build_platform != target_platform]
     - meson install -C _build --no-rebuild
   run_exports:
     - {{ pin_subpackage('toml-f', max_pin='x.x') }}
 
 requirements:
   build:
-    - {{ compiler('c') }}
-    - {{ compiler('fortran') }}
+    - {{ compiler('c') }}  # [unix]
+    - {{ compiler('fortran') }}  # [unix]
+    - {{ compiler('m2w64_c') }}  # [win]
+    - {{ compiler('m2w64_fortran') }}  # [win]
     - meson
     - ninja
 
@@ -32,8 +33,9 @@ test:
   requires:
     - pkg-config
   commands:
+    - set %PKG_CONFIG_PATH%=%PREFIX%\lib\pkgconfig  # [win]
     - pkg-config {{ name }} --exact-version {{ version }}
-    - test -f $PREFIX/lib/lib{{ name }}$SHLIB_EXT
+    - test -f $PREFIX/lib/lib{{ name }}$SHLIB_EXT  # [unix]
 
 about:
   home: https://github.com/toml-f/toml-f
