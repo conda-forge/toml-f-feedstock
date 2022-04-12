@@ -1,0 +1,982 @@
+diff --git a/config/CMakeLists.txt b/config/CMakeLists.txt
+index b4a3d4e..5581ecc 100644
+--- a/config/CMakeLists.txt
++++ b/config/CMakeLists.txt
+@@ -38,9 +38,6 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+   )
+ endif()
+ 
+-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" PARENT_SCOPE)
+-
+ include(CMakePackageConfigHelpers)
+ configure_package_config_file(
+   "${CMAKE_CURRENT_SOURCE_DIR}/template.cmake"
+diff --git a/config/cmake/Findtest-drive.cmake b/config/cmake/Findtest-drive.cmake
+deleted file mode 100644
+index 7d541bf..0000000
+--- a/config/cmake/Findtest-drive.cmake
++++ /dev/null
+@@ -1,120 +0,0 @@
+-# This file is part of toml-f.
+-# SPDX-Identifier: Apache-2.0 OR MIT
+-#
+-# Licensed under either of Apache License, Version 2.0 or MIT license
+-# at your option; you may not use this file except in compliance with
+-# the License.
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-set(_lib "test-drive")
+-set(_pkg "TEST_DRIVE")
+-set(_url "https://github.com/awvwgk/test-drive")
+-set(_rev "v0.4.0")
+-
+-if(NOT DEFINED "${_pkg}_FIND_METHOD")
+-  if(DEFINED "${PROJECT_NAME}-dependency-method")
+-    set("${_pkg}_FIND_METHOD" "${${PROJECT_NAME}-dependency-method}")
+-  else()
+-    set("${_pkg}_FIND_METHOD" "cmake" "pkgconf" "subproject" "fetch")
+-  endif()
+-  set("_${_pkg}_FIND_METHOD")
+-endif()
+-
+-foreach(method in ITEMS ${${_pkg}_FIND_METHOD})
+-  if(TARGET "${_lib}::${_lib}")
+-    break()
+-  endif()
+-
+-  if("${method}" STREQUAL "cmake")
+-    message(STATUS "${_lib}: Find installed package")
+-    find_package("${_lib}" CONFIG)
+-    if("${_lib}_FOUND")
+-      message(STATUS "${_lib}: Found installed package")
+-      break()
+-    endif()
+-  endif()
+-
+-  if("${method}" STREQUAL "pkgconf")
+-    find_package(PkgConfig QUIET)
+-    pkg_check_modules("${_pkg}" QUIET "${_lib}")
+-    if("${_pkg}_FOUND")
+-      message(STATUS "Found ${_lib} via pkg-config")
+-
+-      add_library("${_lib}::${_lib}" INTERFACE IMPORTED)
+-      target_link_libraries(
+-        "${_lib}::${_lib}"
+-        INTERFACE
+-        "${${_pkg}_LINK_LIBRARIES}"
+-        )
+-      target_include_directories(
+-        "${_lib}::${_lib}"
+-        INTERFACE
+-        "${${_pkg}_INCLUDE_DIRS}"
+-        )
+-      break()
+-    endif()
+-  endif()
+-
+-  if("${method}" STREQUAL "subproject")
+-    set("${_pkg}_SOURCE_DIR" "${PROJECT_SOURCE_DIR}/subprojects/${_lib}")
+-    set("${_pkg}_BINARY_DIR" "${PROJECT_BINARY_DIR}/subprojects/${_lib}")
+-    if(EXISTS "${${_pkg}_SOURCE_DIR}/CMakeLists.txt")
+-      message(STATUS "Include ${_lib} from subprojects")
+-      add_subdirectory(
+-        "${${_pkg}_SOURCE_DIR}"
+-        "${${_pkg}_BINARY_DIR}"
+-        )
+-
+-      add_library("${_lib}::${_lib}" INTERFACE IMPORTED)
+-      target_link_libraries("${_lib}::${_lib}" INTERFACE "${_lib}")
+-
+-      # We need the module directory in the subproject before we finish the configure stage
+-      if(NOT EXISTS "${${_pkg}_BINARY_DIR}/include")
+-        make_directory("${${_pkg}_BINARY_DIR}/include")
+-      endif()
+-
+-      break()
+-    endif()
+-  endif()
+-
+-  if("${method}" STREQUAL "fetch")
+-    message(STATUS "Retrieving ${_lib} from ${_url}")
+-    include(FetchContent)
+-    FetchContent_Declare(
+-      "${_lib}"
+-      GIT_REPOSITORY "${_url}"
+-      GIT_TAG "${_rev}"
+-      )
+-    FetchContent_MakeAvailable("${_lib}")
+-
+-    add_library("${_lib}::${_lib}" INTERFACE IMPORTED)
+-    target_link_libraries("${_lib}::${_lib}" INTERFACE "${_lib}")
+-
+-    # We need the module directory in the subproject before we finish the configure stage
+-    FetchContent_GetProperties("${_lib}" BINARY_DIR "${_pkg}_BINARY_DIR")
+-    if(NOT EXISTS "${${_pkg}_BINARY_DIR}/include")
+-      make_directory("${${_pkg}_BINARY_DIR}/include")
+-    endif()
+-
+-    break()
+-  endif()
+-
+-endforeach()
+-
+-if(NOT TARGET "${_lib}::${_lib}")
+-  message(FATAL_ERROR "Could not find dependency ${_lib}")
+-endif()
+-
+-if(DEFINED "_${_pkg}_FIND_METHOD")
+-  unset("${_pkg}_FIND_METHOD")
+-  unset("_${_pkg}_FIND_METHOD")
+-endif()
+-unset(_lib)
+-unset(_pkg)
+-unset(_url)
+-unset(_rev)
+diff --git a/fpm.toml b/fpm.toml
+index df963ef..9860220 100644
+--- a/fpm.toml
++++ b/fpm.toml
+@@ -13,9 +13,3 @@ source-dir = "src"
+ 
+ [build]
+ auto-tests = false
+-
+-[[test]]
+-name = "tftest"
+-source-dir = "test/tftest"
+-[test.dependencies]
+-test-drive.git = "https://github.com/fortran-lang/test-drive.git"
+diff --git a/subprojects/test-drive.wrap b/subprojects/test-drive.wrap
+deleted file mode 100644
+index 3fb7b13..0000000
+--- a/subprojects/test-drive.wrap
++++ /dev/null
+@@ -1,4 +0,0 @@
+-[wrap-git]
+-directory = test-drive
+-url = https://github.com/fortran-lang/test-drive.git
+-revision = v0.4.0
+diff --git a/test/CMakeLists.txt b/test/CMakeLists.txt
+index dd051c5..0188b1c 100644
+--- a/test/CMakeLists.txt
++++ b/test/CMakeLists.txt
+@@ -47,11 +47,7 @@ add_test(
+ )
+ 
+ # Unit testing
+-if(NOT TARGET "test-drive::test-drive")
+-  find_package("test-drive")
+-endif()
+-
+-set(test-srcs)
++set(test-srcs "${dir}/tftest.f90")
+ add_subdirectory("tftest")
+ add_executable(
+   tftester
+@@ -61,7 +57,6 @@ target_link_libraries(
+   tftester
+   PRIVATE
+   "${PROJECT_NAME}-lib"
+-  "test-drive::test-drive"
+ )
+ add_test(
+   "tftest"
+diff --git a/test/meson.build b/test/meson.build
+index adf50a1..051f730 100644
+--- a/test/meson.build
++++ b/test/meson.build
+@@ -29,16 +29,11 @@ if os != 'windows'
+ endif
+ 
+ # Unit testing
+-test_srcs = []
+-testdrive_dep = dependency(
+-  'test-drive',
+-  fallback: ['test-drive', 'testdrive_dep'],
+-  static: true,
+-)
++test_srcs = files('tftest.f90')
+ subdir('tftest')
+ test(
+   'tftest',
+-  executable('tftester', sources: test_srcs, dependencies: [tomlf_dep, testdrive_dep]),
++  executable('tftester', sources: test_srcs, dependencies: tomlf_dep),
+ )
+ 
+ # Serializer from TOML to a specific JSON format suitable for the validator suite
+diff --git a/test/tftest/main.f90 b/test/tftest.f90
+similarity index 96%
+rename from test/tftest/main.f90
+rename to test/tftest.f90
+index fa55d66..123b879 100644
+--- a/test/tftest/main.f90
++++ b/test/tftest.f90
+@@ -14,15 +14,13 @@
+ !> Wrapper for the testsuites
+ program tftester
+    use, intrinsic :: iso_fortran_env, only : error_unit
+-   use testdrive, only : run_testsuite
++   use tftest_testsuite, only : run_testsuite
+    use tftest_build, only : collect_build
+    use tftest_sort, only : collect_sort
+    implicit none
+    integer :: stat
+    character(len=*), parameter :: fmt = '("#", *(1x, a))'
+ 
+-   stat = 0
+-
+    write(error_unit, fmt) repeat('-', 72)
+    write(error_unit, fmt) "Testing:", "build"
+    call run_testsuite(collect_build, error_unit, stat)
+diff --git a/test/tftest/CMakeLists.txt b/test/tftest/CMakeLists.txt
+index 67d0778..d9166a5 100644
+--- a/test/tftest/CMakeLists.txt
++++ b/test/tftest/CMakeLists.txt
+@@ -16,8 +16,8 @@ set(dir "${CMAKE_CURRENT_SOURCE_DIR}")
+ list(
+   APPEND test-srcs
+   "${dir}/build.f90"
+-  "${dir}/main.f90"
+   "${dir}/sort.f90"
++  "${dir}/testsuite.f90"
+ )
+ 
+ set(test-srcs "${test-srcs}" PARENT_SCOPE)
+diff --git a/test/tftest/build.f90 b/test/tftest/build.f90
+index 06bfd04..fc3591e 100644
+--- a/test/tftest/build.f90
++++ b/test/tftest/build.f90
+@@ -13,7 +13,7 @@
+ 
+ !> Testsuite for the `tomlf_build` modules
+ module tftest_build
+-   use testdrive
++   use tftest_testsuite
+    use tomlf_build
+    use tomlf
+    implicit none
+@@ -29,7 +29,7 @@ contains
+ subroutine collect_build(testsuite)
+ 
+    !> Collection of tests
+-   type(unittest_type), allocatable, intent(out) :: testsuite(:)
++   type(toml_unittest), allocatable, intent(out) :: testsuite(:)
+ 
+    testsuite = [ &
+       & new_unittest("array-real-sp", array_real_sp), &
+@@ -60,7 +60,7 @@ subroutine table_real_dp(error)
+    use tomlf_type, only : new_table, toml_table, toml_key
+ 
+    !> Error handling
+-   type(error_type), allocatable, intent(out) :: error
++   type(toml_error), allocatable, intent(out) :: error
+ 
+    type(toml_table) :: table
+    real(tf_dp), parameter :: in1 = 1.0_tf_dp, in2 = huge(in1), in3 = tiny(in1)
+@@ -100,7 +100,7 @@ subroutine table_real_sp(error)
+    use tomlf_type, only : new_table, toml_table, toml_key
+ 
+    !> Error handling
+-   type(error_type), allocatable, intent(out) :: error
++   type(toml_error), allocatable, intent(out) :: error
+ 
+    type(toml_table) :: table
+    real(tf_sp), parameter :: in1 = 1.0_tf_sp, in2 = huge(in1), in3 = tiny(in1)
+@@ -138,7 +138,7 @@ subroutine table_int_i1(error)
+    use tomlf_type, only : new_table, toml_table, toml_key
+ 
+    !> Error handling
+-   type(error_type), allocatable, intent(out) :: error
++   type(toml_error), allocatable, intent(out) :: error
+ 
+    type(toml_table) :: table
+    integer(tf_i1), parameter :: in1 = 1_tf_i1, in2 = huge(in1), in3 = -huge(in1)
+@@ -175,7 +175,7 @@ subroutine table_int_i2(error)
+    use tomlf_type, only : new_table, toml_table
+ 
+    !> Error handling
+-   type(error_type), allocatable, intent(out) :: error
++   type(toml_error), allocatable, intent(out) :: error
+ 
+    type(toml_table) :: table
+    integer(tf_i2), parameter :: in1 = 1_tf_i2, in2 = huge(in1), in3 = -huge(in1)
+@@ -212,7 +212,7 @@ subroutine table_int_i4(error)
+    use tomlf_type, only : new_table, toml_table, toml_key
+ 
+    !> Error handling
+-   type(error_type), allocatable, intent(out) :: error
++   type(toml_error), allocatable, intent(out) :: error
+ 
+    type(toml_table) :: table
+    integer(tf_i4), parameter :: in1 = 1_tf_i4, in2 = huge(in1), in3 = -huge(in1)
+@@ -249,7 +249,7 @@ subroutine table_int_i8(error)
+    use tomlf_type, only : new_table, toml_table, toml_key
+ 
+    !> Error handling
+-   type(error_type), allocatable, intent(out) :: error
++   type(toml_error), allocatable, intent(out) :: error
+ 
+    type(toml_table) :: table
+    integer(tf_i8), parameter :: in1 = 1_tf_i8, in2 = huge(in1), in3 = -huge(in1)
+@@ -285,7 +285,7 @@ subroutine table_bool(error)
+    use tomlf_type, only : toml_table, toml_key
+ 
+    !> Error handling
+-   type(error_type), allocatable, intent(out) :: error
++   type(toml_error), allocatable, intent(out) :: error
+ 
+    type(toml_table) :: table
+    logical, parameter :: true = .true., false = .false.
+@@ -321,7 +321,7 @@ subroutine table_string(error)
+    use tomlf_type, only : toml_table, toml_key
+ 
+    !> Error handling
+-   type(error_type), allocatable, intent(out) :: error
++   type(toml_error), allocatable, intent(out) :: error
+ 
+    type(toml_table) :: table
+    character(len=:), allocatable :: val
+@@ -355,7 +355,7 @@ subroutine table_array(error)
+       & toml_array, toml_key, add_array, len
+ 
+    !> Error handling
+-   type(error_type), allocatable, intent(out) :: error
++   type(toml_error), allocatable, intent(out) :: error
+ 
+    type(toml_table) :: table
+    type(toml_table), pointer :: child
+@@ -416,7 +416,7 @@ subroutine array_real_sp(error)
+    use tomlf_type, only : new_array, toml_array, len
+ 
+    !> Error handling
+-   type(error_type), allocatable, intent(out) :: error
++   type(toml_error), allocatable, intent(out) :: error
+ 
+    type(toml_array) :: array
+    real(tf_sp) :: val
+@@ -444,7 +444,7 @@ subroutine array_real_dp(error)
+    use tomlf_type, only : new_array, toml_array, len
+ 
+    !> Error handling
+-   type(error_type), allocatable, intent(out) :: error
++   type(toml_error), allocatable, intent(out) :: error
+ 
+    type(toml_array) :: array
+    real(tf_dp) :: val
+@@ -472,7 +472,7 @@ subroutine array_int_i1(error)
+    use tomlf_type, only : new_array, toml_array, len
+ 
+    !> Error handling
+-   type(error_type), allocatable, intent(out) :: error
++   type(toml_error), allocatable, intent(out) :: error
+ 
+    type(toml_array) :: array
+    integer(tf_i1) :: val
+@@ -501,7 +501,7 @@ subroutine array_int_i2(error)
+    use tomlf_type, only : new_array, toml_array, len
+ 
+    !> Error handling
+-   type(error_type), allocatable, intent(out) :: error
++   type(toml_error), allocatable, intent(out) :: error
+ 
+    type(toml_array) :: array
+    integer(tf_i2) :: val
+@@ -530,7 +530,7 @@ subroutine array_int_i4(error)
+    use tomlf_type, only : new_array, toml_array, len
+ 
+    !> Error handling
+-   type(error_type), allocatable, intent(out) :: error
++   type(toml_error), allocatable, intent(out) :: error
+ 
+    type(toml_array) :: array
+    integer(tf_i4) :: val
+@@ -559,7 +559,7 @@ subroutine array_int_i8(error)
+    use tomlf_type, only : new_array, toml_array, len
+ 
+    !> Error handling
+-   type(error_type), allocatable, intent(out) :: error
++   type(toml_error), allocatable, intent(out) :: error
+ 
+    type(toml_array) :: array
+    integer(tf_i8) :: val
+@@ -587,7 +587,7 @@ subroutine array_bool(error)
+    use tomlf_type, only : toml_array, len
+ 
+    !> Error handling
+-   type(error_type), allocatable, intent(out) :: error
++   type(toml_error), allocatable, intent(out) :: error
+ 
+    type(toml_array) :: array
+    logical :: val
+@@ -614,7 +614,7 @@ subroutine array_merge(error)
+    use tomlf_type, only : toml_array, new_array, len
+ 
+    !> Error handling
+-   type(error_type), allocatable, intent(out) :: error
++   type(toml_error), allocatable, intent(out) :: error
+ 
+    type(toml_array) :: array1, array2
+    integer :: val1, val2
+@@ -653,7 +653,7 @@ subroutine table_merge(error)
+    use tomlf_type, only : toml_table, add_table, new_table, toml_key
+ 
+    !> Error handling
+-   type(error_type), allocatable, intent(out) :: error
++   type(toml_error), allocatable, intent(out) :: error
+ 
+    type(toml_table) :: table1, table2
+    type(toml_table), pointer :: child
+diff --git a/test/tftest/meson.build b/test/tftest/meson.build
+index bd61649..5e120df 100644
+--- a/test/tftest/meson.build
++++ b/test/tftest/meson.build
+@@ -13,6 +13,6 @@
+ 
+ test_srcs += files(
+   'build.f90',
+-  'main.f90',
+   'sort.f90',
++  'testsuite.f90',
+ )
+diff --git a/test/tftest/sort.f90 b/test/tftest/sort.f90
+index 712af07..7759224 100644
+--- a/test/tftest/sort.f90
++++ b/test/tftest/sort.f90
+@@ -12,7 +12,7 @@
+ ! limitations under the License.
+ 
+ module tftest_sort
+-   use testdrive
++   use tftest_testsuite
+    use tomlf, only : toml_key, sort
+    implicit none
+    private
+@@ -27,7 +27,7 @@ contains
+ subroutine collect_sort(testsuite)
+ 
+    !> Collection of tests
+-   type(unittest_type), allocatable, intent(out) :: testsuite(:)
++   type(toml_unittest), allocatable, intent(out) :: testsuite(:)
+ 
+    testsuite = [ &
+       & new_unittest("sorted", test_sorted), &
+@@ -41,7 +41,7 @@ end subroutine collect_sort
+ subroutine test_sorted(error)
+ 
+    !> Error handling
+-   type(error_type), allocatable, intent(out) :: error
++   type(toml_error), allocatable, intent(out) :: error
+ 
+    type(toml_key), allocatable :: list(:)
+    integer :: i
+@@ -76,7 +76,7 @@ end subroutine test_sorted
+ subroutine test_reversed(error)
+ 
+    !> Error handling
+-   type(error_type), allocatable, intent(out) :: error
++   type(toml_error), allocatable, intent(out) :: error
+ 
+    type(toml_key), allocatable :: list(:)
+    integer :: i
+@@ -111,7 +111,7 @@ end subroutine test_reversed
+ subroutine test_unsorted(error)
+ 
+    !> Error handling
+-   type(error_type), allocatable, intent(out) :: error
++   type(toml_error), allocatable, intent(out) :: error
+ 
+    type(toml_key), allocatable :: list(:)
+    integer :: i
+diff --git a/test/tftest/testsuite.f90 b/test/tftest/testsuite.f90
+new file mode 100644
+index 0000000..0ede740
+--- /dev/null
++++ b/test/tftest/testsuite.f90
+@@ -0,0 +1,481 @@
++! This file is part of toml-f.
++! SPDX-Identifier: Apache-2.0 OR MIT
++!
++! Licensed under either of Apache License, Version 2.0 or MIT license
++! at your option; you may not use this file except in compliance with
++! the License.
++!
++! Unless required by applicable law or agreed to in writing, software
++! distributed under the License is distributed on an "AS IS" BASIS,
++! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++! See the License for the specific language governing permissions and
++! limitations under the License.
++
++!> Define some procedures to automate collecting and launching of tests
++module tftest_testsuite
++   use tomlf_constants, only : tfc, tf_sp, tf_dp, tf_i1, tf_i2, tf_i4, tf_i8, &
++      & TOML_NEWLINE
++   use tomlf_error, only : toml_error, toml_stat
++   implicit none
++   private
++
++   public :: run_testsuite, new_unittest, test_failed, check
++   public :: toml_unittest, toml_error
++
++
++   interface check
++      module procedure :: check_stat
++      module procedure :: check_float_sp
++      module procedure :: check_float_dp
++      module procedure :: check_int_i1
++      module procedure :: check_int_i2
++      module procedure :: check_int_i4
++      module procedure :: check_int_i8
++      module procedure :: check_bool
++      module procedure :: check_string
++   end interface check
++
++
++
++   abstract interface
++      !> Entry point for tests
++      subroutine test_interface(error)
++         import :: toml_error
++
++         !> Error handling
++         type(toml_error), allocatable, intent(out) :: error
++
++      end subroutine test_interface
++   end interface
++
++
++   !> Declaration of a unit test
++   type :: toml_unittest
++
++      !> Name of the test
++      character(len=:), allocatable :: name
++
++      !> Entry point of the test
++      procedure(test_interface), pointer, nopass :: test => null()
++
++      !> Whether test is supposed to fail
++      logical :: should_fail = .false.
++
++   end type toml_unittest
++
++
++   abstract interface
++      !> Collect all tests
++      subroutine collect_interface(testsuite)
++         import :: toml_unittest
++
++         !> Collection of tests
++         type(toml_unittest), allocatable, intent(out) :: testsuite(:)
++
++      end subroutine collect_interface
++   end interface
++
++
++   integer, parameter :: buffersize = 128
++
++
++contains
++
++
++!> Driver for testsuite
++subroutine run_testsuite(collect, unit, stat)
++
++   !> Collect tests
++   procedure(collect_interface) :: collect
++
++   !> Unit for IO
++   integer, intent(in) :: unit
++
++   !> Number of failed tests
++   integer, intent(out) :: stat
++
++   type(toml_unittest), allocatable :: testsuite(:)
++   character(len=*), parameter :: fmt = '("#", *(1x, a))'
++   character(len=*), parameter :: indent = repeat(" ", 5) // repeat(".", 3)
++   type(toml_error), allocatable :: error
++   integer :: ii
++
++   stat = 0
++
++   call collect(testsuite)
++
++   do ii = 1, size(testsuite)
++      write(unit, '("#", *(1x, a))') "Starting", testsuite(ii)%name, "..."
++      call testsuite(ii)%test(error)
++      if (allocated(error) .neqv. testsuite(ii)%should_fail) then
++         if (testsuite(ii)%should_fail) then
++            write(unit, fmt) indent, testsuite(ii)%name, "[UNEXPECTED PASS]"
++         else
++            write(unit, fmt) indent, testsuite(ii)%name, "[FAILED]"
++         end if
++         stat = stat + 1
++      else
++         if (testsuite(ii)%should_fail) then
++            write(unit, fmt) indent, testsuite(ii)%name, "[EXPECTED FAIL]"
++         else
++            write(unit, fmt) indent, testsuite(ii)%name, "[PASSED]"
++         end if
++      end if
++      if (allocated(error)) then
++         write(unit, '(a)') error%message
++      end if
++   end do
++
++end subroutine run_testsuite
++
++
++!> Register a new unit test
++function new_unittest(name, test, should_fail) result(self)
++
++   !> Name of the test
++   character(len=*), intent(in) :: name
++
++   !> Entry point for the test
++   procedure(test_interface) :: test
++
++   !> Whether test is supposed to error or not
++   logical, intent(in), optional :: should_fail
++
++   !> Newly registered test
++   type(toml_unittest) :: self
++
++   self%name = name
++   self%test => test
++   if (present(should_fail)) self%should_fail = should_fail
++
++end function new_unittest
++
++
++!> Report a failing unittest
++subroutine test_failed(error, message, more)
++
++   !> Instance of the TOML error
++   type(toml_error), allocatable, intent(out) :: error
++
++   !> A detailed message describing the error
++   character(kind=tfc, len=*), intent(in) :: message
++
++   !> Another line of error message
++   character(kind=tfc, len=*), intent(in), optional :: more
++
++   allocate(error)
++   error%stat = toml_stat%fatal
++
++   if (present(more)) then
++      error%message = message // TOML_NEWLINE // more
++   else
++      error%message = message
++   end if
++
++end subroutine test_failed
++
++
++subroutine check_stat(error, stat, message, more)
++
++   !> Instance of the TOML error
++   type(toml_error), allocatable, intent(out) :: error
++
++   !> Status of operation
++   integer, intent(in) :: stat
++
++   !> A detailed message describing the error
++   character(kind=tfc, len=*), intent(in), optional :: message
++
++   !> Another line of error message
++   character(kind=tfc, len=*), intent(in), optional :: more
++
++   if (stat /= toml_stat%success) then
++      if (present(message)) then
++         call test_failed(error, message, more)
++      else
++         call test_failed(error, "Non-zero exit code encountered", more)
++      end if
++   end if
++
++end subroutine check_stat
++
++
++subroutine check_float_dp(error, actual, expected, message, more, thr, rel)
++
++   !> Instance of the TOML error
++   type(toml_error), allocatable, intent(out) :: error
++
++   !> Found floating point value
++   real(tf_dp), intent(in) :: actual
++
++   !> Expected floating point value
++   real(tf_dp), intent(in) :: expected
++
++   !> A detailed message describing the error
++   character(kind=tfc, len=*), intent(in), optional :: message
++
++   !> Another line of error message
++   character(kind=tfc, len=*), intent(in), optional :: more
++
++   !> Allowed threshold for matching floating point values
++   real(tf_dp), intent(in), optional :: thr
++
++   !> Check for relative errors instead
++   logical, intent(in), optional :: rel
++
++   logical :: relative
++   real(tf_dp) :: diff, threshold
++
++   if (present(thr)) then
++      threshold = thr
++   else
++      threshold = epsilon(expected)
++   end if
++
++   if (present(rel)) then
++      relative = rel
++   else
++      relative = .false.
++   end if
++
++   if (relative) then
++      diff = abs(actual - expected) / expected
++   else
++      diff = abs(actual - expected)
++   end if
++
++   if (diff > threshold) then
++      if (present(message)) then
++         call test_failed(error, message, more)
++      else
++         call test_failed(error, "Floating point value missmatch", more)
++      end if
++   end if
++
++end subroutine check_float_dp
++
++
++subroutine check_float_sp(error, actual, expected, message, more, thr, rel)
++
++   !> Instance of the TOML error
++   type(toml_error), allocatable, intent(out) :: error
++
++   !> Found floating point value
++   real(tf_sp), intent(in) :: actual
++
++   !> Expected floating point value
++   real(tf_sp), intent(in) :: expected
++
++   !> A detailed message describing the error
++   character(kind=tfc, len=*), intent(in), optional :: message
++
++   !> Another line of error message
++   character(kind=tfc, len=*), intent(in), optional :: more
++
++   !> Allowed threshold for matching floating point values
++   real(tf_sp), intent(in), optional :: thr
++
++   !> Check for relative errors instead
++   logical, intent(in), optional :: rel
++
++   logical :: relative
++   real(tf_sp) :: diff, threshold
++
++   if (present(thr)) then
++      threshold = thr
++   else
++      threshold = epsilon(expected)
++   end if
++
++   if (present(rel)) then
++      relative = rel
++   else
++      relative = .false.
++   end if
++
++   if (relative) then
++      diff = abs(actual - expected) / expected
++   else
++      diff = abs(actual - expected)
++   end if
++
++   if (diff > threshold) then
++      if (present(message)) then
++         call test_failed(error, message, more)
++      else
++         call test_failed(error, "Floating point value missmatch", more)
++      end if
++   end if
++
++end subroutine check_float_sp
++
++
++subroutine check_int_i1(error, actual, expected, message, more)
++
++   !> Instance of the TOML error
++   type(toml_error), allocatable, intent(out) :: error
++
++   !> Found integer value
++   integer(tf_i1), intent(in) :: actual
++
++   !> Expected integer value
++   integer(tf_i1), intent(in) :: expected
++
++   !> A detailed message describing the error
++   character(kind=tfc, len=*), intent(in), optional :: message
++
++   !> Another line of error message
++   character(kind=tfc, len=*), intent(in), optional :: more
++
++   if (expected /= actual) then
++      if (present(message)) then
++         call test_failed(error, message, more)
++      else
++         call test_failed(error, "Integer value missmatch", more)
++      end if
++   end if
++
++end subroutine check_int_i1
++
++
++subroutine check_int_i2(error, actual, expected, message, more)
++
++   !> Instance of the TOML error
++   type(toml_error), allocatable, intent(out) :: error
++
++   !> Found integer value
++   integer(tf_i2), intent(in) :: actual
++
++   !> Expected integer value
++   integer(tf_i2), intent(in) :: expected
++
++   !> A detailed message describing the error
++   character(kind=tfc, len=*), intent(in), optional :: message
++
++   !> Another line of error message
++   character(kind=tfc, len=*), intent(in), optional :: more
++
++   if (expected /= actual) then
++      if (present(message)) then
++         call test_failed(error, message, more)
++      else
++         call test_failed(error, "Integer value missmatch", more)
++      end if
++   end if
++
++end subroutine check_int_i2
++
++
++subroutine check_int_i4(error, actual, expected, message, more)
++
++   !> Instance of the TOML error
++   type(toml_error), allocatable, intent(out) :: error
++
++   !> Found integer value
++   integer(tf_i4), intent(in) :: actual
++
++   !> Expected integer value
++   integer(tf_i4), intent(in) :: expected
++
++   !> A detailed message describing the error
++   character(kind=tfc, len=*), intent(in), optional :: message
++
++   !> Another line of error message
++   character(kind=tfc, len=*), intent(in), optional :: more
++
++   if (expected /= actual) then
++      if (present(message)) then
++         call test_failed(error, message, more)
++      else
++         call test_failed(error, "Integer value missmatch", more)
++      end if
++   end if
++
++end subroutine check_int_i4
++
++
++subroutine check_int_i8(error, actual, expected, message, more)
++
++   !> Instance of the TOML error
++   type(toml_error), allocatable, intent(out) :: error
++
++   !> Found integer value
++   integer(tf_i8), intent(in) :: actual
++
++   !> Expected integer value
++   integer(tf_i8), intent(in) :: expected
++
++   !> A detailed message describing the error
++   character(kind=tfc, len=*), intent(in), optional :: message
++
++   !> Another line of error message
++   character(kind=tfc, len=*), intent(in), optional :: more
++
++   if (expected /= actual) then
++      if (present(message)) then
++         call test_failed(error, message, more)
++      else
++         call test_failed(error, "Integer value missmatch", more)
++      end if
++   end if
++
++end subroutine check_int_i8
++
++
++subroutine check_bool(error, actual, expected, message, more)
++
++   !> Instance of the TOML error
++   type(toml_error), allocatable, intent(out) :: error
++
++   !> Found boolean value
++   logical, intent(in) :: actual
++
++   !> Expected boolean value
++   logical, intent(in) :: expected
++
++   !> A detailed message describing the error
++   character(kind=tfc, len=*), intent(in), optional :: message
++
++   !> Another line of error message
++   character(kind=tfc, len=*), intent(in), optional :: more
++
++   if (expected .neqv. actual) then
++      if (present(message)) then
++         call test_failed(error, message, more)
++      else
++         call test_failed(error, "Logical value missmatch", more)
++      end if
++   end if
++
++end subroutine check_bool
++
++
++subroutine check_string(error, actual, expected, message, more)
++
++   !> Instance of the TOML error
++   type(toml_error), allocatable, intent(out) :: error
++
++   !> Found boolean value
++   character(kind=tfc, len=*), intent(in) :: actual
++
++   !> Expected boolean value
++   character(kind=tfc, len=*), intent(in) :: expected
++
++   !> A detailed message describing the error
++   character(kind=tfc, len=*), intent(in), optional :: message
++
++   !> Another line of error message
++   character(kind=tfc, len=*), intent(in), optional :: more
++
++   if (expected /= actual) then
++      if (present(message)) then
++         call test_failed(error, message, more)
++      else
++         call test_failed(error, "Character value missmatch", more)
++      end if
++   end if
++
++end subroutine check_string
++
++
++end module tftest_testsuite
