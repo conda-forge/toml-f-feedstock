@@ -6,8 +6,8 @@ package:
   version: {{ version }}
 
 source:
-  url: https://github.com/{{ name }}/{{ name }}/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: dff1bf3466ff346d2dee24440d1a4728e71051fe34d5c282b6ce7e6dc3ce0de9
+  url: https://github.com/toml-f/toml-f/releases/download/v0.3.0/toml-f-{{ version }}.tar.xz
+  sha256: 40ceca008091607165a09961b79312abfdbbda71cbb94a9dc2625b88c93ff45a
   patches:
     - no-test-drive.patch  # [win]
     - meson-wrap.patch  # [unix]
