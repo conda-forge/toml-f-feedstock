@@ -1,19 +1,20 @@
 {% set name = "toml-f" %}
-{% set version = "0.2.3" %}
+{% set version = "0.3.0" %}
 
 package:
   name: {{ name|lower }}
   version: {{ version }}
 
 source:
-  url: https://github.com/{{ name }}/{{ name }}/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: 679e36daf1be40e187e3488e6aa44e33e27dd426ba1947f816563d20d063e02a
+  url: https://github.com/toml-f/toml-f/releases/download/v0.3.0/toml-f-{{ version }}.tar.xz
+  sha256: 40ceca008091607165a09961b79312abfdbbda71cbb94a9dc2625b88c93ff45a
   patches:
     - no-test-drive.patch  # [win]
     - meson-wrap.patch  # [unix]
 
 build:
   number: 0
+  skip: true  # [win]
   script:
     - set -ex  # [unix]
     - meson setup _build ${MESON_ARGS:---prefix=${PREFIX} --libdir=lib}  # [unix]
