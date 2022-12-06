@@ -1,28 +1,21 @@
 {% set name = "toml-f" %}
-{% set version = "0.3.0" %}
+{% set version = "0.3.1" %}
 
 package:
   name: {{ name|lower }}
   version: {{ version }}
 
 source:
-  url: https://github.com/toml-f/toml-f/releases/download/v0.3.0/toml-f-{{ version }}.tar.xz
-  sha256: 40ceca008091607165a09961b79312abfdbbda71cbb94a9dc2625b88c93ff45a
+  url: https://github.com/toml-f/toml-f/releases/download/v0.3.1/toml-f-{{ version }}.tar.xz
+  sha256: 7f40f60c8d9ffbb1b99fb051a3e6682c7dd04d7479aa1cf770eff8174b02544f
   patches:
-    - no-test-drive.patch  # [win]
-    - meson-wrap.patch  # [unix]
+    - no-test-drive.patch
 
 build:
   number: 0
   skip: true  # [win]
-  script:
-    - set -ex  # [unix]
-    - meson setup _build ${MESON_ARGS:---prefix=${PREFIX} --libdir=lib}  # [unix]
-    - meson setup _build --prefix=%PREFIX% --libdir=lib  # [win]
-    - meson compile -C _build
-    - meson install -C _build --no-rebuild
   run_exports:
-    - {{ pin_subpackage('toml-f', max_pin='x.x') }}
+    - {{ pin_subpackage(name, max_pin='x.x') }}
 
 requirements:
   build:
@@ -32,24 +25,26 @@ requirements:
     - {{ compiler('m2w64_fortran') }}  # [win]
     - meson
     - ninja
+    - toml-test
 
 test:
   requires:
     - pkg-config
   commands:
-    - set PKG_CONFIG_PATH=%PREFIX%\lib\pkgconfig  # [win]
     - pkg-config {{ name }} --exact-version {{ version }}
     - test -f $PREFIX/lib/lib{{ name }}$SHLIB_EXT  # [unix]
+    - test ! -f $PREFIX/lib/lib{{ name }}.a  # [unix]
 
 about:
-  home: https://github.com/toml-f/toml-f
+  home: https://toml-f.readthedocs.io
+  dev_url: https://github.com/toml-f/toml-f
+  doc_url: https://toml-f.github.io/toml-f
   license: Apache-2.0 OR MIT
   license_file:
     - LICENSE-Apache
     - LICENSE-MIT
   summary: >-
     TOML parser implementation for data serialization and deserialization in Fortran 
-  doc_url: https://toml-f.github.io/toml-f
 
 extra:
   recipe-maintainers:
