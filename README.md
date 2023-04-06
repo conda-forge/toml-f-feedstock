@@ -1,11 +1,11 @@
-About toml-f
-============
+About toml-f-feedstock
+======================
+
+Feedstock license: [BSD-3-Clause](https://github.com/conda-forge/toml-f-feedstock/blob/main/LICENSE.txt)
 
 Home: https://toml-f.readthedocs.io
 
 Package license: Apache-2.0 OR MIT
-
-Feedstock license: [BSD-3-Clause](https://github.com/conda-forge/toml-f-feedstock/blob/main/LICENSE.txt)
 
 Summary: TOML parser implementation for data serialization and deserialization in Fortran
 
