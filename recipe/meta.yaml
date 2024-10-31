@@ -12,13 +12,14 @@ source:
     - no-test-drive.patch
 
 build:
-  number: 0
-  skip: true  # [win]
+  number: 1
   run_exports:
     - {{ pin_subpackage(name, max_pin='x.x') }}
 
 requirements:
   build:
+    - {{ stdlib('c') }}  # [unix]
+    - {{ stdlib('m2w64_c') }}  # [win]
     - {{ compiler('c') }}  # [unix]
     - {{ compiler('fortran') }}  # [unix]
     - {{ compiler('m2w64_c') }}  # [win]
