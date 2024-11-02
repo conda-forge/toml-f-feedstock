@@ -1,10 +1,12 @@
 setlocal EnableExtensions EnableDelayedExpansion
-@echo on
 
+@echo off
 (
-[binaries]
-ar = 'llvm-ar'
+  echo [binaries]
+  echo ar = 'llvm-ar'
 ) > ar.ini
+
+@echo on
 
 set "PKG_CONFIG_PATH=%LIBRARY_LIB%\pkgconfig;%LIBRARY_PREFIX%\share\pkgconfig;%BUILD_PREFIX%\Library\lib\pkgconfig"
 
