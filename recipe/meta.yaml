@@ -1,5 +1,5 @@
 {% set name = "toml-f" %}
-{% set version = "0.4.2" %}
+{% set version = "0.4.3" %}
 
 package:
   name: {{ name|lower }}
@@ -7,12 +7,12 @@ package:
 
 source:
   url: https://github.com/toml-f/toml-f/releases/download/v{{ version }}/toml-f-{{ version }}.tar.xz
-  sha256: 6b49013d3bcd1043494c140d7b2da6b0cedd87648e4fc5179fcfcf41226d3232
+  sha256: 0b53cf9ec98eff01a81d956e9ef851c16b3c6b49c934d0665b43db9f6ee39953
   patches:
     - no-test-drive.patch
 
 build:
-  number: 2
+  number: 0
   run_exports:
     - {{ pin_subpackage(name, max_pin='x.x') }}
 
@@ -46,7 +46,6 @@ about:
     - LICENSE-MIT
   summary: >-
     TOML parser implementation for data serialization and deserialization in Fortran 
-
 extra:
   recipe-maintainers:
     - awvwgk
