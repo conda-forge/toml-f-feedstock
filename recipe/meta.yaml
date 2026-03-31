@@ -8,33 +8,62 @@ package:
 source:
   url: https://github.com/toml-f/toml-f/releases/download/v{{ version }}/toml-f-{{ version }}.tar.xz
   sha256: 9a6c129836d093efd0cab5a2a013330020682a82e8f59a3882e9ae3249c8281f
-  patches:
-    - no-test-drive.patch
 
 build:
-  number: 0
-  run_exports:
-    - {{ pin_subpackage(name, max_pin='x.x') }}
+  number: 1
 
-requirements:
-  build:
-    - {{ stdlib('c') }}  # [unix]
-    - {{ stdlib('m2w64_c') }}  # [win]
-    - {{ compiler('c') }}  # [unix]
-    - {{ compiler('fortran') }}  # [unix]
-    - {{ compiler('m2w64_c') }}  # [win]
-    - {{ compiler('m2w64_fortran') }}  # [win]
-    - meson
-    - ninja
-    - toml-test
+outputs:
+  - name: {{ name }}
+    script: build_pkg.sh   # [unix]
+    script: build_pkg.bat  # [win]
+    build:
+      string: {{ module_abi }}_h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}
+      run_exports:
+        - {{ pin_subpackage(name, max_pin='x.x') }}
+      ignore_run_exports:
+        - test-drive  # test dependency only
 
-test:
-  requires:
-    - pkg-config
-  commands:
-    - pkg-config {{ name }} --exact-version {{ version }}
-    - test -f $PREFIX/lib/lib{{ name }}$SHLIB_EXT  # [unix]
-    - test ! -f $PREFIX/lib/lib{{ name }}.a  # [unix]
+    requirements:
+      build:
+        - {{ stdlib('c') }}  # [unix]
+        - {{ stdlib('m2w64_c') }}  # [win]
+        - {{ compiler('c') }}  # [unix]
+        - {{ compiler('fortran') }}  # [unix]
+        - {{ compiler('m2w64_c') }}  # [win]
+        - {{ compiler('m2w64_fortran') }}  # [win]
+        - meson
+        - ninja
+        - pkg-config
+      host:
+        - test-drive-devel * {{ module_abi }}_*
+
+    test:
+      requires:
+        - pkg-config
+      commands:
+        - pkg-config {{ name }} --exact-version {{ version }}
+        - test -f $PREFIX/lib/lib{{ name }}$SHLIB_EXT  # [unix]
+        - test ! -f $PREFIX/lib/lib{{ name }}.a  # [unix]
+        - test ! -f $PREFIX/lib/libtest-drive$SHLIB_EXT  # [unix]
+
+  - name: {{ name }}-devel
+    build:
+      string: {{ module_abi }}_h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}
+      run_exports:
+        - {{ pin_subpackage(name, max_pin='x.x') }} {{ module_abi }}_*
+
+    requirements:
+      run:
+        - {{ pin_subpackage(name, max_pin='x.x') }} {{ module_abi }}_*
+
+    test:
+      requires:
+        - pkg-config
+      commands:
+        - pkg-config {{ name }} --exact-version {{ version }}
+        - test -f $PREFIX/lib/lib{{ name }}$SHLIB_EXT  # [unix]
+        - test ! -f $PREFIX/lib/lib{{ name }}.a  # [unix]
+        - test ! -f $PREFIX/lib/libtest-drive$SHLIB_EXT  # [unix]
 
 about:
   home: https://toml-f.readthedocs.io
@@ -46,6 +75,8 @@ about:
     - LICENSE-MIT
   summary: >-
     TOML parser implementation for data serialization and deserialization in Fortran 
+
 extra:
   recipe-maintainers:
     - awvwgk
+  feedstock-name: {{ name }}

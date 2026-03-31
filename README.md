@@ -86,6 +86,7 @@ Current release info
 | Name | Downloads | Version | Platforms |
 | --- | --- | --- | --- |
 | [![Conda Recipe](https://img.shields.io/badge/recipe-toml--f-green.svg)](https://anaconda.org/conda-forge/toml-f) | [![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/toml-f.svg)](https://anaconda.org/conda-forge/toml-f) | [![Conda Version](https://img.shields.io/conda/vn/conda-forge/toml-f.svg)](https://anaconda.org/conda-forge/toml-f) | [![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/toml-f.svg)](https://anaconda.org/conda-forge/toml-f) |
+| [![Conda Recipe](https://img.shields.io/badge/recipe-toml--f--devel-green.svg)](https://anaconda.org/conda-forge/toml-f-devel) | [![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/toml-f-devel.svg)](https://anaconda.org/conda-forge/toml-f-devel) | [![Conda Version](https://img.shields.io/conda/vn/conda-forge/toml-f-devel.svg)](https://anaconda.org/conda-forge/toml-f-devel) | [![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/toml-f-devel.svg)](https://anaconda.org/conda-forge/toml-f-devel) |
 
 Installing toml-f
 =================
@@ -97,16 +98,16 @@ conda config --add channels conda-forge
 conda config --set channel_priority strict
 ```
 
-Once the `conda-forge` channel has been enabled, `toml-f` can be installed with `conda`:
+Once the `conda-forge` channel has been enabled, `toml-f, toml-f-devel` can be installed with `conda`:
 
 ```
-conda install toml-f
+conda install toml-f toml-f-devel
 ```
 
 or with `mamba`:
 
 ```
-mamba install toml-f
+mamba install toml-f toml-f-devel
 ```
 
 It is possible to list all of the versions of `toml-f` available on your platform with `conda`:
