@@ -2,7 +2,7 @@
 {% set version = "0.5.0" %}
 
 package:
-  name: {{ name|lower }}
+  name: {{ name|lower }}-pkg
   version: {{ version }}
 
 source:
@@ -10,7 +10,7 @@ source:
   sha256: 9a6c129836d093efd0cab5a2a013330020682a82e8f59a3882e9ae3249c8281f
 
 build:
-  number: 1
+  number: 2
 
 outputs:
   - name: {{ name }}
@@ -25,13 +25,15 @@ outputs:
 
     requirements:
       build:
-        - {{ stdlib('c') }}  # [unix]
-        - {{ stdlib('m2w64_c') }}  # [win]
-        - {{ compiler('c') }}  # [unix]
-        - {{ compiler('fortran') }}  # [unix]
-        - {{ compiler('m2w64_c') }}  # [win]
-        - {{ compiler('m2w64_fortran') }}  # [win]
-        - meson
+        - {{ stdlib('c') }}  # [unix or (win and module_abi == "flang")]
+        - {{ stdlib('m2w64_c') }}  # [win and module_abi == "gfortran"]
+        - {{ compiler('c') }}  # [unix or (win and module_abi == "flang")]
+        - {{ compiler('fortran') }}  # [unix or (win and module_abi == "flang")]
+        - {{ compiler('m2w64_c') }}  # [win and module_abi == "gfortran"]
+        - {{ compiler('m2w64_fortran') }}  # [win and module_abi == "gfortran"]
+        - ifx_{{ target_platform }} 2025.*  # [module_abi == "ifx"]
+        - meson  # [module_abi == "gfortran"]
+        - cmake  # [module_abi != "gfortran"]
         - ninja
         - pkg-config
       host:
