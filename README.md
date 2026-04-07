@@ -3,6 +3,36 @@ About toml-f-feedstock
 
 Feedstock license: [BSD-3-Clause](https://github.com/conda-forge/toml-f-feedstock/blob/main/LICENSE.txt)
 
+
+About toml-f
+------------
+
+Home: https://toml-f.readthedocs.io
+
+Package license: Apache-2.0 OR MIT
+
+Summary: TOML parser implementation for data serialization and deserialization in Fortran 
+
+Development: https://github.com/toml-f/toml-f
+
+Documentation: https://toml-f.github.io/toml-f
+
+About toml-f
+------------
+
+Home: https://toml-f.readthedocs.io
+
+Package license: Apache-2.0 OR MIT
+
+Summary: TOML parser implementation for data serialization and deserialization in Fortran
+
+Development: https://github.com/toml-f/toml-f
+
+Documentation: https://toml-f.github.io/toml-f
+
+About toml-f-devel
+------------------
+
 Home: https://toml-f.readthedocs.io
 
 Package license: Apache-2.0 OR MIT
@@ -66,10 +96,24 @@ Current build status
                 </a>
               </td>
             </tr><tr>
-              <td>win_64</td>
+              <td>win_64_module_abiflang</td>
               <td>
                 <a href="https://dev.azure.com/conda-forge/feedstock-builds/_build/latest?definitionId=14527&branchName=main">
-                  <img src="https://dev.azure.com/conda-forge/feedstock-builds/_apis/build/status/toml-f-feedstock?branchName=main&jobName=win&configuration=win%20win_64_" alt="variant">
+                  <img src="https://dev.azure.com/conda-forge/feedstock-builds/_apis/build/status/toml-f-feedstock?branchName=main&jobName=win&configuration=win%20win_64_module_abiflang" alt="variant">
+                </a>
+              </td>
+            </tr><tr>
+              <td>win_64_module_abigfortran</td>
+              <td>
+                <a href="https://dev.azure.com/conda-forge/feedstock-builds/_build/latest?definitionId=14527&branchName=main">
+                  <img src="https://dev.azure.com/conda-forge/feedstock-builds/_apis/build/status/toml-f-feedstock?branchName=main&jobName=win&configuration=win%20win_64_module_abigfortran" alt="variant">
+                </a>
+              </td>
+            </tr><tr>
+              <td>win_64_module_abiifx</td>
+              <td>
+                <a href="https://dev.azure.com/conda-forge/feedstock-builds/_build/latest?definitionId=14527&branchName=main">
+                  <img src="https://dev.azure.com/conda-forge/feedstock-builds/_apis/build/status/toml-f-feedstock?branchName=main&jobName=win&configuration=win%20win_64_module_abiifx" alt="variant">
                 </a>
               </td>
             </tr>
