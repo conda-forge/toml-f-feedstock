@@ -8,8 +8,14 @@ jobs:
     vmImage: windows-2022
   strategy:
     matrix:
-      win_64_:
-        CONFIG: win_64_
+      win_64_module_abiflang:
+        CONFIG: win_64_module_abiflang
+        UPLOAD_PACKAGES: 'True'
+      win_64_module_abigfortran:
+        CONFIG: win_64_module_abigfortran
+        UPLOAD_PACKAGES: 'True'
+      win_64_module_abiifx:
+        CONFIG: win_64_module_abiifx
         UPLOAD_PACKAGES: 'True'
   timeoutInMinutes: 360
   variables:

@@ -1,0 +1,4 @@
+module_abi:
+  - gfortran
+  - flang  # [win]
+  - ifx    # [win]
