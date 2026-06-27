@@ -1,5 +1,5 @@
 {% set name = "toml-f" %}
-{% set version = "0.5.1" %}
+{% set version = "0.5.2" %}
 
 package:
   name: {{ name|lower }}-pkg
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://github.com/toml-f/toml-f/releases/download/v{{ version }}/toml-f-{{ version }}.tar.xz
-  sha256: 961221000469a03306dbd99baf20644b6071cbda71add123e1cdf4a6183a2e91
+  sha256: e18ccc26ac1e7580ffb22feda0fbafd228473248f71e84eac171a455a7915d59
 
 build:
   number: 0
